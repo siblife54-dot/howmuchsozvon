@@ -1,134 +1,1369 @@
-import { useEffect, useId, useRef, useState } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
-import { AnimatePresence, animate, motion, MotionConfig, useReducedMotion } from 'motion/react';
-import { ArrowDown, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Check, CheckCheck, Copy, Download, Equal, Info, Minus, Plus, ReceiptText, RotateCcw, Settings2, Share2, ShieldCheck, Sparkles, Users, X } from 'lucide-react';
-import { activePeople, calculate, clone, colors, demo, difference, loadState, number, rub, STORAGE_KEY } from './model';
-import type { Person, Saved, Scenario } from './model';
-import { receiptPng, receiptText } from './receipt';
+import { useEffect, useId, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  MotionConfig,
+  useReducedMotion,
+} from "motion/react";
+import {
+  ArrowDown,
+  ArrowDownRight,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  CheckCheck,
+  Copy,
+  Download,
+  Equal,
+  Info,
+  Minus,
+  Plus,
+  ReceiptText,
+  RotateCcw,
+  Settings2,
+  Share2,
+  ShieldCheck,
+  Sparkles,
+  Users,
+  X,
+} from "lucide-react";
+import {
+  activePeople,
+  calculate,
+  clone,
+  colors,
+  demo,
+  difference,
+  loadState,
+  number,
+  rub,
+  STORAGE_KEY,
+} from "./model";
+import type { Person, Saved, Scenario } from "./model";
+import { receiptPng, receiptText } from "./receipt";
 
-function Counter({ value, suffix = '', digits = 0 }: { value: number; suffix?: string; digits?: number }) {
-  const ref = useRef<HTMLSpanElement>(null), old = useRef(value), reduced = useReducedMotion();
+function Counter({
+  value,
+  suffix = "",
+  digits = 0,
+}: {
+  value: number;
+  suffix?: string;
+  digits?: number;
+}) {
+  const ref = useRef<HTMLSpanElement>(null),
+    old = useRef(value),
+    reduced = useReducedMotion();
   useEffect(() => {
-    if (reduced) { if (ref.current) ref.current.textContent = number(value, digits); old.current = value; return; }
-    const animation = animate(old.current, value, { duration: .55, ease: [0.16, 1, .3, 1], onUpdate: v => { old.current = v; if (ref.current) ref.current.textContent = number(v, digits); } });
+    if (reduced) {
+      if (ref.current) ref.current.textContent = number(value, digits);
+      old.current = value;
+      return;
+    }
+    const animation = animate(old.current, value, {
+      duration: 0.55,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (v) => {
+        old.current = v;
+        if (ref.current) ref.current.textContent = number(v, digits);
+      },
+    });
     return () => animation.stop();
   }, [value, digits, reduced]);
-  return <><span ref={ref}>{number(value, digits)}</span>{suffix}</>;
+  return (
+    <>
+      <span ref={ref}>{number(value, digits)}</span>
+      {suffix}
+    </>
+  );
 }
 
-function Room({ scenario, onPerson, compact = false, readonly = false, tag, toggleMode = false }: { scenario: Scenario; onPerson?: (p: Person) => void; compact?: boolean; readonly?: boolean; tag?: string; toggleMode?: boolean }) {
-  const uid = useId().replace(/:/g, ''), reduced = useReducedMotion();
+function Room({
+  scenario,
+  onPerson,
+  compact = false,
+  readonly = false,
+  tag,
+  toggleMode = false,
+}: {
+  scenario: Scenario;
+  onPerson?: (p: Person) => void;
+  compact?: boolean;
+  readonly?: boolean;
+  tag?: string;
+  toggleMode?: boolean;
+}) {
+  const uid = useId().replace(/:/g, ""),
+    reduced = useReducedMotion();
   const count = activePeople(scenario).length;
   const people = scenario.people;
-  return <div className={`room ${compact ? 'compact' : ''}`}>
-    <div className="room-meta"><span><i className="live-dot" />{tag || 'ПЕРЕГОВОРНАЯ № 01'}</span><span>{count} / 12 МЕСТ</span></div>
-    <svg viewBox="0 0 640 425" className="room-art" aria-label={`Переговорная: ${count} участников, ${scenario.minutes} минут`}>
-      <defs>
-        <pattern id={`floor${uid}`} width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="#b7b9aa" opacity=".5" /></pattern>
-        <pattern id={`wood${uid}`} width="12" height="12" patternUnits="userSpaceOnUse"><path d="M0 4H12M0 10H12" stroke="#c5bfaa" strokeWidth=".6" opacity=".5" /></pattern>
-        <filter id={`shadow${uid}`} x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="12" stdDeviation="10" floodColor="#393d29" floodOpacity=".15" /></filter>
-      </defs>
-      <rect width="640" height="425" fill={`url(#floor${uid})`} />
-      <path d="M32 47V25H55M585 25H608V47M32 378V400H55M585 400H608V378" fill="none" stroke="#c5c7b7" />
-      <ellipse cx="320" cy="213" rx="213" ry="128" fill="none" stroke="#d8dcca" strokeWidth="1" strokeDasharray="3 7" />
-      <motion.ellipse cx="320" cy="213" rx="213" ry="128" fill="none" stroke="#9da95f" strokeWidth="2.5" strokeLinecap="round" style={{ rotate: -90, transformOrigin: '320px 213px' }} initial={false} animate={{ pathLength: scenario.minutes / 240 }} transition={{ duration: reduced ? 0 : .5 }} />
-      <g filter={`url(#shadow${uid})`}><rect x="159" y="116" width="322" height="196" rx="90" fill="#b8b29b" /><rect x="159" y="108" width="322" height="196" rx="90" fill="#ded9c7" /><rect x="159" y="108" width="322" height="196" rx="90" fill={`url(#wood${uid})`} /><rect x="169" y="118" width="302" height="176" rx="81" fill="none" stroke="#eeeadd" /></g>
-      <g transform="translate(211 162) rotate(-12)"><rect width="43" height="31" rx="3" fill="#53574d"/><rect x="3" y="3" width="37" height="24" rx="1" fill="#8f9c86"/><path d="M-4 32H47L44 36H0Z" fill="#b3b5a8"/><path d="M10 11H28M10 16H33M10 21H23" stroke="#d3f18b" strokeWidth="2"/></g>
-      <g transform="translate(396 241) rotate(14)"><rect width="35" height="43" rx="2" fill="#fcfbf3"/><path d="M7 10H27M7 17H27M7 24H20" stroke="#b1b4a3"/><rect x="41" width="4" height="40" rx="2" fill="#fa8764"/></g>
-      <g transform="translate(407 153)"><circle r="15" fill="#b9b6a5"/><circle cy="-3" r="12" fill="#fcfbf5"/><circle cy="-3" r="8" fill="#705040"/><path d="M10-7Q23-8 19 1Q17 6 10 3" fill="none" stroke="#fcfbf5" strokeWidth="4"/></g>
-      <g transform="translate(235 260)"><circle r="13" fill="#b4b69b"/><path d="M0 3Q-23-13-10-16Q2-16 0 3M0 3Q-3-28 8-23Q19-12 0 3M0 3Q24-16 21-3Q17 9 0 3" fill="#71845b"/><path d="M0 4L-1-9M1 3L10-9" stroke="#526443" fill="none"/></g>
-      <text x="320" y="207" textAnchor="middle" className="table-minutes">{scenario.minutes}<tspan fontSize="12" dx="5">МИН</tspan></text>
-      <text x="320" y="230" textAnchor="middle" className="table-caption">{count ? 'ЕСТЬ ЧТО ОБСУДИТЬ' : 'ТИШИНА — ТОЖЕ ПЛАН'}</text>
-      <AnimatePresence>
-        {people.map((p, i) => {
-          const angle = -Math.PI / 2 + i * Math.PI * 2 / people.length;
-          const x = 320 + 246 * Math.cos(angle), y = 211 + 153 * Math.sin(angle);
-          const excluded = scenario.excluded.includes(p.id);
-          const initial = p.name.trim().split(/[\s·]+/).slice(0, 2).map(s => s[0]).join('').toUpperCase();
-          const label = `${p.name}, ${rub(p.salary / scenario.hours * scenario.minutes / 60)} за встречу${excluded ? ', не участвует' : ''}`;
-          return <motion.g key={p.id} initial={{ opacity: 0, scale: .5, x, y: y - 15 }} animate={{ x, y, opacity: excluded ? .3 : 1, scale: 1 }} exit={{ opacity: 0, scale: .3, y: y + 20 }} transition={{ type: 'spring', stiffness: 230, damping: 24, duration: reduced ? 0 : undefined }}>
-            <g role={readonly ? 'img' : 'button'} tabIndex={readonly ? undefined : 0} aria-label={label} onClick={() => !readonly && onPerson?.(p)} onKeyDown={e => { if (!readonly && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onPerson?.(p); } }} className={readonly ? 'avatar' : 'avatar interactive'}>
-              <title>{label}</title><rect x="-40" y="-40" width="80" height="80" rx="40" fill="transparent"/>
-              <rect x="-27" y="-25" width="54" height="53" rx="19" fill="#c8c9bb" transform={`rotate(${angle * 180 / Math.PI + 90})`} />
-              <rect x="-23" y="-29" width="46" height="42" rx="16" fill="#daddcc" transform={`rotate(${angle * 180 / Math.PI + 90})`} />
-              <circle cy="4" r="24" fill="#464a3d" opacity=".13" />
-              <circle r="23" fill={colors[p.color]} stroke="#f7f6ef" strokeWidth="3" />
-              <text textAnchor="middle" y="5" className="avatar-initials">{initial}</text>
-              {excluded && <g><circle cx="18" cy="-17" r="9" fill="#262922"/><path d="M14-17H22" stroke="white" strokeWidth="2"/></g>}
-              {people.length <= 8 && <text textAnchor="middle" y="42" className="avatar-name">{p.name.split(/[\s·]+/)[0].slice(0, 12)}</text>}
-            </g>
-          </motion.g>;
-        })}
-      </AnimatePresence>
-    </svg>
-    <div className="room-bottom"><span>{!people.length ? 'Добавьте первого участника ↓' : readonly ? 'Исходный состав зафиксирован' : 'Нажмите на участника, чтобы ' + (toggleMode ? 'вернуть или убрать его' : 'изменить его данные')}</span><span className="room-scale">ВИД СВЕРХУ ↗</span></div>
-  </div>;
+  return (
+    <div className={`room ${compact ? "compact" : ""}`}>
+      <div className="room-meta">
+        <span>
+          <i className="live-dot" />
+          {tag || "ПЕРЕГОВОРНАЯ № 01"}
+        </span>
+        <span>{count} / 12 МЕСТ</span>
+      </div>
+      <svg
+        viewBox="0 0 640 425"
+        className="room-art"
+        aria-label={`Переговорная: ${count} участников, ${scenario.minutes} минут`}
+      >
+        <defs>
+          <pattern
+            id={`floor${uid}`}
+            width="28"
+            height="28"
+            patternUnits="userSpaceOnUse"
+          >
+            <circle cx="1" cy="1" r=".8" fill="#b7b9aa" opacity=".5" />
+          </pattern>
+          <pattern
+            id={`wood${uid}`}
+            width="12"
+            height="12"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M0 4H12M0 10H12"
+              stroke="#c5bfaa"
+              strokeWidth=".6"
+              opacity=".5"
+            />
+          </pattern>
+          <filter
+            id={`shadow${uid}`}
+            x="-50%"
+            y="-50%"
+            width="200%"
+            height="200%"
+          >
+            <feDropShadow
+              dx="0"
+              dy="12"
+              stdDeviation="10"
+              floodColor="#393d29"
+              floodOpacity=".15"
+            />
+          </filter>
+        </defs>
+        <rect width="640" height="425" fill={`url(#floor${uid})`} />
+        <path
+          d="M32 47V25H55M585 25H608V47M32 378V400H55M585 400H608V378"
+          fill="none"
+          stroke="#c5c7b7"
+        />
+        <ellipse
+          cx="320"
+          cy="213"
+          rx="213"
+          ry="128"
+          fill="none"
+          stroke="#d8dcca"
+          strokeWidth="1"
+          strokeDasharray="3 7"
+        />
+        <motion.ellipse
+          cx="320"
+          cy="213"
+          rx="213"
+          ry="128"
+          fill="none"
+          stroke="#9da95f"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          style={{ rotate: -90, transformOrigin: "320px 213px" }}
+          initial={false}
+          animate={{ pathLength: scenario.minutes / 240 }}
+          transition={{ duration: reduced ? 0 : 0.5 }}
+        />
+        <g filter={`url(#shadow${uid})`}>
+          <rect
+            x="159"
+            y="116"
+            width="322"
+            height="196"
+            rx="90"
+            fill="#b8b29b"
+          />
+          <rect
+            x="159"
+            y="108"
+            width="322"
+            height="196"
+            rx="90"
+            fill="#ded9c7"
+          />
+          <rect
+            x="159"
+            y="108"
+            width="322"
+            height="196"
+            rx="90"
+            fill={`url(#wood${uid})`}
+          />
+          <rect
+            x="169"
+            y="118"
+            width="302"
+            height="176"
+            rx="81"
+            fill="none"
+            stroke="#eeeadd"
+          />
+        </g>
+        <g transform="translate(211 162) rotate(-12)">
+          <rect width="43" height="31" rx="3" fill="#53574d" />
+          <rect x="3" y="3" width="37" height="24" rx="1" fill="#8f9c86" />
+          <path d="M-4 32H47L44 36H0Z" fill="#b3b5a8" />
+          <path
+            d="M10 11H28M10 16H33M10 21H23"
+            stroke="#d3f18b"
+            strokeWidth="2"
+          />
+        </g>
+        <g transform="translate(396 241) rotate(14)">
+          <rect width="35" height="43" rx="2" fill="#fcfbf3" />
+          <path d="M7 10H27M7 17H27M7 24H20" stroke="#b1b4a3" />
+          <rect x="41" width="4" height="40" rx="2" fill="#fa8764" />
+        </g>
+        <g transform="translate(407 153)">
+          <circle r="15" fill="#b9b6a5" />
+          <circle cy="-3" r="12" fill="#fcfbf5" />
+          <circle cy="-3" r="8" fill="#705040" />
+          <path
+            d="M10-7Q23-8 19 1Q17 6 10 3"
+            fill="none"
+            stroke="#fcfbf5"
+            strokeWidth="4"
+          />
+        </g>
+        <g transform="translate(235 260)">
+          <circle r="13" fill="#b4b69b" />
+          <path
+            d="M0 3Q-23-13-10-16Q2-16 0 3M0 3Q-3-28 8-23Q19-12 0 3M0 3Q24-16 21-3Q17 9 0 3"
+            fill="#71845b"
+          />
+          <path d="M0 4L-1-9M1 3L10-9" stroke="#526443" fill="none" />
+        </g>
+        <text x="320" y="207" textAnchor="middle" className="table-minutes">
+          {scenario.minutes}
+          <tspan fontSize="12" dx="5">
+            МИН
+          </tspan>
+        </text>
+        <text x="320" y="230" textAnchor="middle" className="table-caption">
+          {count ? "ЕСТЬ ЧТО ОБСУДИТЬ" : "ТИШИНА — ТОЖЕ ПЛАН"}
+        </text>
+        <AnimatePresence>
+          {people.map((p, i) => {
+            const angle = -Math.PI / 2 + (i * Math.PI * 2) / people.length;
+            const x = 320 + 246 * Math.cos(angle),
+              y = 211 + 153 * Math.sin(angle);
+            const excluded = scenario.excluded.includes(p.id);
+            const initial = p.name
+              .trim()
+              .split(/[\s·]+/)
+              .slice(0, 2)
+              .map((s) => s[0])
+              .join("")
+              .toUpperCase();
+            const label = `${p.name}, ${rub(((p.salary / scenario.hours) * scenario.minutes) / 60)} за встречу${excluded ? ", не участвует" : ""}`;
+            return (
+              <motion.g
+                key={p.id}
+                initial={{ opacity: 0, scale: 0.5, x, y: y - 15 }}
+                animate={{ x, y, opacity: excluded ? 0.3 : 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.3, y: y + 20 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 230,
+                  damping: 24,
+                  duration: reduced ? 0 : undefined,
+                }}
+              >
+                <g
+                  role={readonly ? "img" : "button"}
+                  tabIndex={readonly ? undefined : 0}
+                  aria-label={label}
+                  onClick={() => !readonly && onPerson?.(p)}
+                  onKeyDown={(e) => {
+                    if (!readonly && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      onPerson?.(p);
+                    }
+                  }}
+                  className={readonly ? "avatar" : "avatar interactive"}
+                >
+                  <title>{label}</title>
+                  <rect
+                    x="-40"
+                    y="-40"
+                    width="80"
+                    height="80"
+                    rx="40"
+                    fill="transparent"
+                  />
+                  <rect
+                    x="-27"
+                    y="-25"
+                    width="54"
+                    height="53"
+                    rx="19"
+                    fill="#c8c9bb"
+                    transform={`rotate(${(angle * 180) / Math.PI + 90})`}
+                  />
+                  <rect
+                    x="-23"
+                    y="-29"
+                    width="46"
+                    height="42"
+                    rx="16"
+                    fill="#daddcc"
+                    transform={`rotate(${(angle * 180) / Math.PI + 90})`}
+                  />
+                  <circle cy="4" r="24" fill="#464a3d" opacity=".13" />
+                  <circle
+                    r="23"
+                    fill={colors[p.color]}
+                    stroke="#f7f6ef"
+                    strokeWidth="3"
+                  />
+                  <text textAnchor="middle" y="5" className="avatar-initials">
+                    {initial}
+                  </text>
+                  {excluded && (
+                    <g>
+                      <circle cx="18" cy="-17" r="9" fill="#262922" />
+                      <path d="M14-17H22" stroke="white" strokeWidth="2" />
+                    </g>
+                  )}
+                  {people.length <= 8 && (
+                    <text textAnchor="middle" y="42" className="avatar-name">
+                      {p.name.split(/[\s·]+/)[0].slice(0, 12)}
+                    </text>
+                  )}
+                </g>
+              </motion.g>
+            );
+          })}
+        </AnimatePresence>
+      </svg>
+      <div className="room-bottom">
+        <span>
+          {!people.length
+            ? "Добавьте первого участника ↓"
+            : readonly
+              ? "Исходный состав зафиксирован"
+              : "Нажмите на участника, чтобы " +
+                (toggleMode ? "вернуть или убрать его" : "изменить его данные")}
+        </span>
+        <span className="room-scale">ВИД СВЕРХУ ↗</span>
+      </div>
+    </div>
+  );
 }
 
-function Slider({ label, value, max, min, unit, onChange, hint }: { label: string; value: number; max: number; min: number; unit: string; onChange: (n: number) => void; hint: string }) {
-  return <label className="slider-control"><span className="control-top"><span>{label}</span><strong>{value}<small>{unit}</small></strong></span><input type="range" min={min} max={max} step="1" value={value} onChange={e => onChange(+e.target.value)} style={{ '--fill': `${(value - min) / (max - min) * 100}%` } as CSSProperties}/><span className="range-ends"><span>{min} {unit}</span><span>{hint}</span><span>{max} {unit}</span></span></label>;
+function Slider({
+  label,
+  value,
+  max,
+  min,
+  unit,
+  onChange,
+  hint,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  min: number;
+  unit: string;
+  onChange: (n: number) => void;
+  hint: string;
+}) {
+  return (
+    <label className="slider-control">
+      <span className="control-top">
+        <span>{label}</span>
+        <strong>
+          {value}
+          <small>{unit}</small>
+        </strong>
+      </span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step="1"
+        value={value}
+        onChange={(e) => onChange(+e.target.value)}
+        style={
+          {
+            "--fill": `${((value - min) / (max - min)) * 100}%`,
+          } as CSSProperties
+        }
+      />
+      <span className="range-ends">
+        <span>
+          {min} {unit}
+        </span>
+        <span>{hint}</span>
+        <span>
+          {max} {unit}
+        </span>
+      </span>
+    </label>
+  );
 }
 
-function Modal({ children, title, onClose, className = '' }: { children: ReactNode; title: string; onClose: () => void; className?: string }) {
+function Modal({
+  children,
+  title,
+  onClose,
+  className = "",
+}: {
+  children: ReactNode;
+  title: string;
+  onClose: () => void;
+  className?: string;
+}) {
   const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => { const d = ref.current!; d.showModal(); return () => d.close(); }, []);
-  return <dialog ref={ref} className={`modal ${className}`} onCancel={onClose} onClick={e => { if (e.target === e.currentTarget) onClose(); }}><div className="modal-heading"><h2>{title}</h2><button className="icon-btn" onClick={onClose} aria-label="Закрыть"><X size={22}/></button></div>{children}</dialog>;
+  useEffect(() => {
+    const d = ref.current!;
+    d.showModal();
+    return () => d.close();
+  }, []);
+  return (
+    <dialog
+      ref={ref}
+      className={`modal ${className}`}
+      onCancel={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="modal-heading">
+        <h2>{title}</h2>
+        <button className="icon-btn" onClick={onClose} aria-label="Закрыть">
+          <X size={22} />
+        </button>
+      </div>
+      {children}
+    </dialog>
+  );
 }
 
-function PersonForm({ person, onSave, onDelete, onClose }: { person: Person | null; onSave: (p: Person) => void; onDelete?: () => void; onClose: () => void }) {
-  const [name, setName] = useState(person?.name || ''), [salary, setSalary] = useState(String(person?.salary ?? 100000));
-  return <Modal title={person ? 'Участник встречи' : 'Новое место за столом'} onClose={onClose}><form onSubmit={e => { e.preventDefault(); onSave({ id: person?.id ?? crypto.randomUUID(), name: name.trim(), salary: Number(salary), color: person?.color ?? Math.floor(Math.random() * 6) }); }} className="person-form">
-    <p>Данные останутся только в этом браузере.</p><label>Имя или должность<input autoFocus required maxLength={60} value={name} onChange={e => setName(e.target.value)} placeholder="Например, Саша · продакт" /></label><label>Зарплата в месяц, ₽<input required type="number" min="0" max="10000000" step="0.01" value={salary} onChange={e => setSalary(e.target.value)} /></label><small>Используйте одинаковую основу для всей команды: например, зарплату до вычета налогов.</small><button type="submit" className="btn lime" disabled={!name.trim() || salary === ''}>Сохранить участника<Check size={18}/></button>{onDelete && <button type="button" className="text-btn danger" onClick={onDelete}>Удалить из команды</button>}
-  </form></Modal>;
+function PersonForm({
+  person,
+  onSave,
+  onDelete,
+  onClose,
+}: {
+  person: Person | null;
+  onSave: (p: Person) => void;
+  onDelete?: () => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(person?.name || ""),
+    [salary, setSalary] = useState(String(person?.salary ?? 100000));
+  return (
+    <Modal
+      title={person ? "Участник встречи" : "Новое место за столом"}
+      onClose={onClose}
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSave({
+            id: person?.id ?? crypto.randomUUID(),
+            name: name.trim(),
+            salary: Number(salary),
+            color: person?.color ?? Math.floor(Math.random() * 6),
+          });
+        }}
+        className="person-form"
+      >
+        <p>Данные останутся только в этом браузере.</p>
+        <label>
+          Имя или должность
+          <input
+            autoFocus
+            required
+            maxLength={60}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Например, Саша · продакт"
+          />
+        </label>
+        <label>
+          Зарплата в месяц, ₽
+          <input
+            required
+            type="number"
+            min="0"
+            max="10000000"
+            step="0.01"
+            value={salary}
+            onChange={(e) => setSalary(e.target.value)}
+          />
+        </label>
+        <small>
+          Используйте одинаковую основу для всей команды: например, зарплату до
+          вычета налогов.
+        </small>
+        <button
+          type="submit"
+          className="btn lime"
+          disabled={!name.trim() || salary === ""}
+        >
+          Сохранить участника
+          <Check size={18} />
+        </button>
+        {onDelete && (
+          <button type="button" className="text-btn danger" onClick={onDelete}>
+            Удалить из команды
+          </button>
+        )}
+      </form>
+    </Modal>
+  );
 }
 
-function ReceiptModal({ scenario, before, onClose, notify }: { scenario: Scenario; before: Scenario | null; onClose: () => void; notify: (s: string) => void }) {
-  const [blob, setBlob] = useState<Blob | null>(null), [url, setUrl] = useState(''), [error, setError] = useState('');
-  useEffect(() => { let stopped = false, imageUrl = ''; receiptPng(scenario, before).then(b => { if (stopped) return; imageUrl = URL.createObjectURL(b); setBlob(b); setUrl(imageUrl); }).catch(() => setError('Не удалось создать PNG. Скопируйте текстовый результат.')); return () => { stopped = true; if (imageUrl) URL.revokeObjectURL(imageUrl); }; }, [scenario, before]);
-  const copy = async () => { try { await navigator.clipboard.writeText(receiptText(scenario, before)); notify('Результат скопирован'); } catch { setError('Копирование недоступно. Выделите текст ниже.'); } };
-  const download = () => { const a = document.createElement('a'); a.href = url; a.download = 'schet-za-sozvon.png'; a.click(); notify('Чек PNG готов к сохранению'); };
-  const share = async () => { if (!blob) return; const file = new File([blob], 'schet-za-sozvon.png', { type: 'image/png' }); try { if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: 'Счёт за созвон' }); else if (navigator.share) await navigator.share({ title: 'Счёт за созвон', text: receiptText(scenario, before) }); else await copy(); } catch (e) { if (!(e instanceof Error && e.name === 'AbortError')) setError('Поделиться не удалось. Скачайте PNG или скопируйте текст.'); } };
-  return <Modal title="Ваш счёт, пожалуйста." onClose={onClose} className="receipt-modal"><p className="modal-subtitle">Можно отправить коллегам. В чеке только общие цифры.</p><div className="receipt-preview">{url ? <img src={url} alt={receiptText(scenario, before)} /> : <p>{error || 'Печатаем чек…'}</p>}</div><div className="receipt-actions"><button className="btn lime" disabled={!blob} onClick={download}><Download size={18}/>Скачать PNG</button><button className="btn outline" disabled={!blob} onClick={share}><Share2 size={18}/>{typeof navigator.share === 'function' ? 'Поделиться' : 'Скопировать'}</button><button className="text-btn" onClick={copy}><Copy size={16}/>Копировать текст</button></div>{error && <p role="alert">{error}</p>}<details><summary>Текстовая версия чека</summary><pre className="receipt-text">{receiptText(scenario, before)}</pre></details></Modal>;
+function ReceiptModal({
+  scenario,
+  before,
+  onClose,
+  notify,
+}: {
+  scenario: Scenario;
+  before: Scenario | null;
+  onClose: () => void;
+  notify: (s: string) => void;
+}) {
+  const [blob, setBlob] = useState<Blob | null>(null),
+    [url, setUrl] = useState(""),
+    [error, setError] = useState("");
+  useEffect(() => {
+    let stopped = false,
+      imageUrl = "";
+    receiptPng(scenario, before)
+      .then((b) => {
+        if (stopped) return;
+        imageUrl = URL.createObjectURL(b);
+        setBlob(b);
+        setUrl(imageUrl);
+      })
+      .catch(() =>
+        setError("Не удалось создать PNG. Скопируйте текстовый результат."),
+      );
+    return () => {
+      stopped = true;
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+    };
+  }, [scenario, before]);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(receiptText(scenario, before));
+      notify("Результат скопирован");
+    } catch {
+      setError("Копирование недоступно. Выделите текст ниже.");
+    }
+  };
+  const download = () => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "schet-za-sozvon.png";
+    a.click();
+    notify("Чек PNG готов к сохранению");
+  };
+  const share = async () => {
+    if (!blob) return;
+    const file = new File([blob], "schet-za-sozvon.png", { type: "image/png" });
+    try {
+      if (navigator.canShare?.({ files: [file] }))
+        await navigator.share({ files: [file], title: "Счёт за созвон" });
+      else if (navigator.share)
+        await navigator.share({
+          title: "Счёт за созвон",
+          text: receiptText(scenario, before),
+        });
+      else await copy();
+    } catch (e) {
+      if (!(e instanceof Error && e.name === "AbortError"))
+        setError("Поделиться не удалось. Скачайте PNG или скопируйте текст.");
+    }
+  };
+  return (
+    <Modal
+      title="Ваш счёт, пожалуйста."
+      onClose={onClose}
+      className="receipt-modal"
+    >
+      <p className="modal-subtitle">
+        Можно отправить коллегам. В чеке только общие цифры.
+      </p>
+      <div className="receipt-preview">
+        {url ? (
+          <img src={url} alt={receiptText(scenario, before)} />
+        ) : (
+          <p>{error || "Печатаем чек…"}</p>
+        )}
+      </div>
+      <div className="receipt-actions">
+        <button className="btn lime" disabled={!blob} onClick={download}>
+          <Download size={18} />
+          Скачать PNG
+        </button>
+        <button className="btn outline" disabled={!blob} onClick={share}>
+          <Share2 size={18} />
+          {typeof navigator.share === "function" ? "Поделиться" : "Скопировать"}
+        </button>
+        <button className="text-btn" onClick={copy}>
+          <Copy size={16} />
+          Копировать текст
+        </button>
+      </div>
+      {error && <p role="alert">{error}</p>}
+      <details>
+        <summary>Текстовая версия чека</summary>
+        <pre className="receipt-text">{receiptText(scenario, before)}</pre>
+      </details>
+    </Modal>
+  );
 }
 
 export default function App() {
-  const [state, setState] = useState<Saved>(loadState), [editing, setEditing] = useState<Person | 'new' | null>(null), [teamOpen, setTeamOpen] = useState(false), [receipt, setReceipt] = useState(false), [resetOpen, setResetOpen] = useState(false), [toast, setToast] = useState(''), [storageError, setStorageError] = useState(false), [help, setHelp] = useState(false);
-  const { current, before, mode } = state, comparing = mode === 'compare' && before !== null;
-  const c = calculate(current), delta = before ? difference(before, current) : null;
-  useEffect(() => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); setStorageError(false); } catch { setStorageError(true); } }, [state]);
-  useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(''), 3600); return () => clearTimeout(timer); }, [toast]);
-  const update = (patch: Partial<Scenario>) => setState(s => ({ ...s, current: { ...s.current, ...patch }, example: false }));
-  const toggle = (p: Person) => update({ excluded: current.excluded.includes(p.id) ? current.excluded.filter(id => id !== p.id) : [...current.excluded, p.id] });
-  const savePerson = (p: Person) => { update({ people: current.people.some(x => x.id === p.id) ? current.people.map(x => x.id === p.id ? p : x) : [...current.people, p] }); setEditing(null); };
-  const optimize = () => { setState(s => ({ ...s, before: clone(s.current), current: clone(s.current), mode: 'compare' })); setToast('Исходный сценарий зафиксирован. Теперь попробуйте что-нибудь изменить.'); };
-  const hours = <label className="hours-control">Рабочих часов в месяц <input aria-label="Рабочих часов в месяц" type="number" min="1" max="744" step="1" value={current.hours} onChange={e => { const value = Number(e.target.value); if (Number.isInteger(value) && value >= 1 && value <= 744) update({ hours: value }); }}/><button className="icon-btn" onClick={() => setHelp(true)} aria-label="Как рассчитывается стоимость"><Info size={16}/></button></label>;
-  return <MotionConfig reducedMotion="user"><div className="app-shell">
-    <header className="site-header"><a className="brand" href="#" aria-label="Счёт за созвон, главная"><span className="brand-icon"><ReceiptText size={25}/></span><span>счёт за<br/>созвон<span className="brand-period">.</span></span></a><div className="project-mark"><span className="tiny-square"/>В КАЖДОЙ БОЧКЕ<span className="project-number">ПРОЕКТ № 01</span></div><button className="header-reset text-btn" onClick={() => setResetOpen(true)}><RotateCcw size={15}/><span>Начать заново</span></button></header>
-    <main>
-      <section className="intro"><div className="eyebrow"><span className="pill dark-pill">КАЛЬКУЛЯТОР ВСТРЕЧ</span><span>ВРЕМЯ — ТОЖЕ БЮДЖЕТ</span></div><div className="intro-line"><h1>Созвонимся?<br/><span className="heading-second">А счёт <span className="highlight-word">на кого?<svg viewBox="0 0 350 15" preserveAspectRatio="none" aria-hidden="true"><path d="M3 10Q155-4 346 6"/></svg></span></span></h1><span className="hero-stamp" aria-hidden="true"><ArrowDownRight size={38}/><span>ВСЕГО-ТО<br/>НА ПЯТЬ МИНУТ</span></span></div><p>Ваши совещания стоят дороже, чем кажется.<br className="desktop-break"/> Соберите команду за столом и узнайте цену «давайте обсудим».</p></section>
-      <nav className="step-nav" aria-label="Этапы расчёта"><button aria-current={!comparing ? 'step' : undefined} onClick={() => { if (comparing) { setState(s => ({ ...s, mode: 'calculate', before: null })); setToast('Текущий состав сохранён в основном расчёте'); } }}><span>01</span> Собрать команду</button><span className="step-line"/><button aria-current={comparing ? 'step' : undefined} onClick={() => !comparing && optimize()}><span>02</span> Найти баланс</button><span className="step-line"/><button onClick={() => setReceipt(true)}><span>03</span> Забрать счёт<ArrowUpRight size={14}/></button></nav>
-      {!comparing ? <section className="calculator-grid" aria-label="Расчёт стоимости">
-        <div className="workspace"><div className="section-title"><div><h2>Все за одним столом<span className="count-badge">{c.count}</span></h2><p>{state.example ? 'Демонстрационная команда · зарплаты условные' : 'Ваша команда · нажмите на аватар для редактирования'}</p></div><button className="btn small outline" onClick={() => setTeamOpen(true)}><Settings2 size={16}/><span>Команда</span></button></div>
-          <Room scenario={current} onPerson={setEditing}/>
-          <div className="team-toolbar"><div className="avatar-stack" aria-hidden="true">{current.people.slice(0, 4).map(p => <span key={p.id} style={{ background: colors[p.color] }}>{p.name[0]}</span>)}<span className="stack-count">{current.people.length}</span></div><span className="team-hint">{current.people.length ? 'У каждого часа есть цена' : 'Пока никто не занят встречами'}</span><button className="btn dark add-person" disabled={current.people.length >= 12} onClick={() => setEditing('new')}><Plus size={18}/>{current.people.length >= 12 ? 'Все 12 мест заняты' : 'Добавить участника'}</button></div>
-          <div className="settings"><Slider label="Длительность встречи" value={current.minutes} min={5} max={240} unit="мин" hint="без «ещё один вопрос»" onChange={minutes => update({ minutes })}/><Slider label="Таких встреч в месяц" value={current.meetings} min={0} max={100} unit="раз" hint="каждый созвон считается" onChange={meetings => update({ meetings })}/></div>{hours}
-        </div>
-        <aside className="cost-panel"><div className="panel-top"><span className="eyebrow">СТОИМОСТЬ ВРЕМЕНИ</span><span className="status-light">LIVE</span></div><p className="total-label">В месяц вы созваниваетесь на</p><div className="main-total" data-testid="monthly-cost"><Counter value={c.monthly.toNumber()}/><span className="currency">₽</span></div><div className="cost-rule"/><div className="cost-line"><span>Одна встреча</span><strong data-testid="meeting-cost"><Counter value={c.meeting.toNumber()} suffix=" ₽"/></strong></div><div className="cost-line"><span>За целый год</span><strong data-testid="yearly-cost"><Counter value={c.yearly.toNumber()} suffix=" ₽"/></strong></div><div className="time-metric"><span className="time-icon"><Users size={22}/></span><div><strong><Counter value={c.personHours.toNumber()} digits={1}/><small> чел.-ч / месяц</small></strong><p>Рабочее время всей команды</p></div></div><p className="honest-note"><Info size={15}/><span>Это стоимость рабочего времени, а не потерянные деньги. Хорошая встреча может стоить каждого рубля.</span></p><button className="btn lime optimize-btn" onClick={optimize}><span>А что, если<br/>оптимизировать?</span><ArrowUpRight size={27}/></button><button className="panel-receipt text-btn" onClick={() => setReceipt(true)}><ReceiptText size={17}/>Получить счёт за совещания</button><div className="panel-serrations"/></aside>
-      </section> : <section className="comparison" aria-label="Сравнение сценариев">
-        <div className="compare-heading"><div><div className="eyebrow">МЕНЬШЕ СОЗВОНОВ. БОЛЬШЕ ДЕЛА.</div><h2>Тот же стол.<br/>Другие правила<span className="coral-text">.</span></h2><p>Справа меняйте состав и настройки. Слева всё остаётся как было.</p></div><button className="text-btn" onClick={() => { update(clone(before)); setToast('Сценарий ПОСЛЕ сброшен к исходному'); }}><RotateCcw size={16}/>Сбросить изменения</button></div>
-        <div className="compare-rooms"><article className="scenario-card"><div className="scenario-title"><span className="pill muted-pill">ДО</span><span>Исходный сценарий <ShieldCheck size={15}/></span></div><Room compact readonly scenario={before} tag="ТАК БЫЛО"/><div className="scenario-stats"><strong data-testid="before-cost">{rub(calculate(before).monthly)}<small>/ месяц</small></strong><span>{calculate(before).count} чел. · {before.minutes} мин · {before.meetings} встреч</span></div><div className="frozen-note"><CheckCheck size={17}/>Этот сценарий зафиксирован</div></article>
-        <article className="scenario-card after-card"><div className="scenario-title"><span className="pill lime-pill">ПОСЛЕ</span><span>Ваша версия <Sparkles size={15}/></span></div><Room compact toggleMode scenario={current} onPerson={toggle} tag="А ЧТО, ЕСЛИ…"/><div className="scenario-stats"><strong data-testid="after-cost"><Counter value={c.monthly.toNumber()} suffix=" ₽"/><small>/ месяц</small></strong><span>{c.count} чел. · {current.minutes} мин · {current.meetings} встреч</span></div><div className="participant-toggles" aria-label="Участники после оптимизации">{current.people.map(p => <button key={p.id} aria-pressed={!current.excluded.includes(p.id)} onClick={() => toggle(p)}><span aria-hidden="true" style={{ background: colors[p.color] }}>{p.name[0]}</span>{p.name.split(/[\s·]+/)[0]}{current.excluded.includes(p.id) ? <Plus size={13}/> : <Check size={13}/>}</button>)}</div><button className="text-btn edit-team" onClick={() => setTeamOpen(true)}><Settings2 size={15}/>Изменить команду и зарплаты</button><div className="after-settings"><Slider label="Длительность" value={current.minutes} min={5} max={240} unit="мин" hint="" onChange={minutes => update({ minutes })}/><Slider label="Встреч в месяц" value={current.meetings} min={0} max={100} unit="раз" hint="" onChange={meetings => update({ meetings })}/>{hours}</div></article></div>
-        {delta && <div className={`difference-panel ${delta.monthly.lt(0) ? 'increased' : ''}`}><div className="difference-heading"><span className="difference-symbol">{delta.monthly.gt(0) ? <ArrowDownRight size={35}/> : delta.monthly.lt(0) ? <ArrowUpRight size={35}/> : <Equal size={35}/>}</span><div><div className="eyebrow">{delta.monthly.gt(0) ? 'ВЫСВОБОЖДАЕТСЯ ВРЕМЯ НА' : delta.monthly.lt(0) ? 'СТОИМОСТЬ ВЫРОСЛА НА' : 'ПОКА БЕЗ ИЗМЕНЕНИЙ'}</div><strong data-testid="difference-cost"><Counter value={delta.monthly.abs().toNumber()} suffix=" ₽"/><small>/ месяц</small></strong></div><div className="percent-badge">{delta.percent === null ? '—' : `${delta.monthly.gt(0) ? '−' : delta.monthly.lt(0) ? '+' : ''}${number(delta.percent.abs(), 1)}%`}</div></div><div className="difference-bottom"><span><b>{rub(delta.yearly.abs())}</b> {delta.yearly.gte(0) ? 'эквивалент за год' : 'дополнительно за год'}</span><span><b>{number(delta.personHours.abs(), 1)} чел.-ч</b> {delta.personHours.gte(0) ? 'высвобождено в месяц' : 'добавлено в месяц'}</span><button className="btn dark" onClick={() => setReceipt(true)}>Забрать счёт<ReceiptText size={18}/></button></div><p className="difference-disclaimer">Денежный эквивалент рабочего времени. Фактическая экономия бюджета зависит от того, как вы используете это время.</p></div>}
-        <button className="text-btn back-calc" onClick={() => setState(s => ({ ...s, mode: 'calculate', before: null }))}><ArrowLeft size={17}/>Вернуться к расчёту с текущими настройками</button>
-      </section>}
-      <section className="bottom-note"><div><span className="note-number">!</span><p><strong>Дело не в том, чтобы отменить все встречи.</strong><br/>А в том, чтобы каждая была на своём месте.</p></div><button className="text-btn" onClick={() => setHelp(true)}>Как мы считаем<ArrowRight size={16}/></button></section>
-    </main>
-    <footer><span>В КАЖДОЙ БОЧКЕ <span className="footer-muted">/ цифровые штуки со смыслом</span></span><span className="privacy"><ShieldCheck size={14}/>{storageError ? 'Автосохранение недоступно в браузере' : 'Данные только в вашем браузере'}</span><a href="https://github.com/siblife54-dot/howmuchsozvon" target="_blank" rel="noreferrer">Код проекта<ArrowUpRight size={13}/></a></footer>
-    <AnimatePresence>{toast && <motion.div className="toast" role="status" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}><Check size={18}/>{toast}</motion.div>}</AnimatePresence>
-    {teamOpen && <Modal title="Кто на созвоне?" onClose={() => setTeamOpen(false)}><p className="modal-subtitle">{comparing ? 'Редактируется только сценарий ПОСЛЕ.' : 'Соберите свою команду. До 12 участников.'}</p><div className="team-list">{current.people.length === 0 && <p>Здесь пока пусто. Начните с одного человека.</p>}{current.people.map(p => <div className="team-row" key={p.id}><span className="list-avatar" style={{ background: colors[p.color] }}>{p.name[0]}</span><button className="person-edit" onClick={() => { setTeamOpen(false); setEditing(p); }}><strong>{p.name}</strong><span>{rub(p.salary)} / мес · {rub(p.salary / current.hours)} / ч</span></button><button className="icon-btn" aria-pressed={!current.excluded.includes(p.id)} aria-label={`${current.excluded.includes(p.id) ? 'Вернуть' : 'Исключить'} ${p.name} из встречи`} onClick={() => toggle(p)}>{current.excluded.includes(p.id) ? <Plus size={16}/> : <Check size={16}/>}</button><button className="icon-btn danger" aria-label={`Удалить ${p.name}`} onClick={() => update({ people: current.people.filter(x => x.id !== p.id), excluded: current.excluded.filter(id => id !== p.id) })}><X size={18}/></button></div>)}</div><button className="btn dark full-width" disabled={current.people.length >= 12} onClick={() => { setTeamOpen(false); setEditing('new'); }}><Plus size={17}/>{current.people.length >= 12 ? 'Все 12 мест заняты' : 'Добавить участника'}</button></Modal>}
-    {editing && <PersonForm person={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSave={savePerson} onDelete={editing === 'new' ? undefined : () => { update({ people: current.people.filter(p => p.id !== editing.id), excluded: current.excluded.filter(id => id !== editing.id) }); setEditing(null); }}/ >}
-    {receipt && <ReceiptModal scenario={current} before={comparing ? before : null} onClose={() => setReceipt(false)} notify={setToast}/>}
-    {resetOpen && <Modal title="Новый созвон, чистый лист?" onClose={() => setResetOpen(false)}><p className="modal-subtitle">Текущие настройки и сравнение будут заменены демонстрационной командой.</p><button className="btn lime full-width" onClick={() => { setState({ version: 1, current: demo(), before: null, mode: 'calculate', example: true }); setResetOpen(false); setToast('Демонстрационная команда восстановлена'); }}>Начать заново<RotateCcw size={18}/></button><button className="text-btn full-width" onClick={() => setResetOpen(false)}>Оставить мой расчёт</button></Modal>}
-    {help && <Modal title="Прозрачная математика" onClose={() => setHelp(false)}><div className="help-content"><p>Стоимость часа = месячная зарплата ÷ рабочие часы в месяц.</p><p>Одна встреча = сумма стоимости часа участников × длительность в минутах ÷ 60.</p><p>Месяц = стоимость встречи × количество встреч. Год = месяц × 12. Человеко-часы = число участников × часы встречи × число встреч.</p><div className="formula-example">Например: 2 человека с зарплатой 80 000 ₽, 160 рабочих часов, встреча на 30 минут.<br/><strong>500 ₽ за встречу · 5 000 ₽ за 10 встреч.</strong></div><p>160 часов — условная норма, её можно изменить. Это оценка стоимости рабочего времени по зарплате, без страховых взносов, накладных расходов и оценки пользы встречи.</p><p>Расчёт ведётся десятичной арифметикой; округляются только показанные суммы. Разница отображаемых округлённых сумм может отличаться на рубль от округлённой разницы.</p><p><ShieldCheck size={16}/> Имена, зарплаты и настройки хранятся в localStorage этого браузера. На сервер они не отправляются. На общем компьютере очистите данные сайта после использования.</p></div></Modal>}
-  </div></MotionConfig>;
+  const [state, setState] = useState<Saved>(loadState),
+    [editing, setEditing] = useState<Person | "new" | null>(null),
+    [teamOpen, setTeamOpen] = useState(false),
+    [receipt, setReceipt] = useState(false),
+    [resetOpen, setResetOpen] = useState(false),
+    [toast, setToast] = useState(""),
+    [storageError, setStorageError] = useState(false),
+    [help, setHelp] = useState(false);
+  const { current, before, mode } = state,
+    comparing = mode === "compare" && before !== null;
+  const c = calculate(current),
+    delta = before ? difference(before, current) : null;
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      setStorageError(false);
+    } catch {
+      setStorageError(true);
+    }
+  }, [state]);
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(""), 3600);
+    return () => clearTimeout(timer);
+  }, [toast]);
+  const update = (patch: Partial<Scenario>) =>
+    setState((s) => ({
+      ...s,
+      current: { ...s.current, ...patch },
+      example: false,
+    }));
+  const toggle = (p: Person) =>
+    update({
+      excluded: current.excluded.includes(p.id)
+        ? current.excluded.filter((id) => id !== p.id)
+        : [...current.excluded, p.id],
+    });
+  const savePerson = (p: Person) => {
+    update({
+      people: current.people.some((x) => x.id === p.id)
+        ? current.people.map((x) => (x.id === p.id ? p : x))
+        : [...current.people, p],
+    });
+    setEditing(null);
+  };
+  const optimize = () => {
+    setState((s) => ({
+      ...s,
+      before: clone(s.current),
+      current: clone(s.current),
+      mode: "compare",
+    }));
+    setToast(
+      "Исходный сценарий зафиксирован. Теперь попробуйте что-нибудь изменить.",
+    );
+  };
+  const hours = (
+    <label className="hours-control">
+      Рабочих часов в месяц{" "}
+      <input
+        aria-label="Рабочих часов в месяц"
+        type="number"
+        min="1"
+        max="744"
+        step="1"
+        value={current.hours}
+        onChange={(e) => {
+          const value = Number(e.target.value);
+          if (Number.isInteger(value) && value >= 1 && value <= 744)
+            update({ hours: value });
+        }}
+      />
+      <button
+        className="icon-btn"
+        onClick={() => setHelp(true)}
+        aria-label="Как рассчитывается стоимость"
+      >
+        <Info size={16} />
+      </button>
+    </label>
+  );
+  return (
+    <MotionConfig reducedMotion="user">
+      <div className="app-shell">
+        <header className="site-header">
+          <a className="brand" href="#" aria-label="Счёт за созвон, главная">
+            <span className="brand-icon">
+              <ReceiptText size={25} />
+            </span>
+            <span>
+              счёт за
+              <br />
+              созвон<span className="brand-period">.</span>
+            </span>
+          </a>
+          <div className="project-mark">
+            <span className="tiny-square" />В КАЖДОЙ БОЧКЕ
+            <span className="project-number">ПРОЕКТ № 01</span>
+          </div>
+          <button
+            className="header-reset text-btn"
+            onClick={() => setResetOpen(true)}
+          >
+            <RotateCcw size={15} />
+            <span>Начать заново</span>
+          </button>
+        </header>
+        <main>
+          <section className="intro">
+            <div className="eyebrow">
+              <span className="pill dark-pill">КАЛЬКУЛЯТОР ВСТРЕЧ</span>
+              <span>ВРЕМЯ — ТОЖЕ БЮДЖЕТ</span>
+            </div>
+            <div className="intro-line">
+              <h1>
+                Созвонимся?
+                <br />
+                <span className="heading-second">
+                  А счёт{" "}
+                  <span className="highlight-word">
+                    на кого?
+                    <svg
+                      viewBox="0 0 350 15"
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                    >
+                      <path d="M3 10Q155-4 346 6" />
+                    </svg>
+                  </span>
+                </span>
+              </h1>
+              <span className="hero-stamp" aria-hidden="true">
+                <ArrowDownRight size={38} />
+                <span>
+                  ВСЕГО-ТО
+                  <br />
+                  НА ПЯТЬ МИНУТ
+                </span>
+              </span>
+            </div>
+            <p>
+              Ваши совещания стоят дороже, чем кажется.
+              <br className="desktop-break" /> Соберите команду за столом и
+              узнайте цену «давайте обсудим».
+            </p>
+          </section>
+          <nav className="step-nav" aria-label="Этапы расчёта">
+            <button
+              aria-current={!comparing ? "step" : undefined}
+              onClick={() => {
+                if (comparing) {
+                  setState((s) => ({ ...s, mode: "calculate", before: null }));
+                  setToast("Текущий состав сохранён в основном расчёте");
+                }
+              }}
+            >
+              <span>01</span> Собрать команду
+            </button>
+            <span className="step-line" />
+            <button
+              aria-current={comparing ? "step" : undefined}
+              onClick={() => !comparing && optimize()}
+            >
+              <span>02</span> Найти баланс
+            </button>
+            <span className="step-line" />
+            <button onClick={() => setReceipt(true)}>
+              <span>03</span> Забрать счёт
+              <ArrowUpRight size={14} />
+            </button>
+          </nav>
+          {!comparing ? (
+            <section className="calculator-grid" aria-label="Расчёт стоимости">
+              <div className="workspace">
+                <div className="section-title">
+                  <div>
+                    <h2>
+                      Все за одним столом
+                      <span className="count-badge">{c.count}</span>
+                    </h2>
+                    <p>
+                      {state.example
+                        ? "Демонстрационная команда · зарплаты условные"
+                        : "Ваша команда · нажмите на аватар для редактирования"}
+                    </p>
+                  </div>
+                  <button
+                    className="btn small outline"
+                    onClick={() => setTeamOpen(true)}
+                  >
+                    <Settings2 size={16} />
+                    <span>Команда</span>
+                  </button>
+                </div>
+                <Room scenario={current} onPerson={setEditing} />
+                <div className="team-toolbar">
+                  <div className="avatar-stack" aria-hidden="true">
+                    {current.people.slice(0, 4).map((p) => (
+                      <span key={p.id} style={{ background: colors[p.color] }}>
+                        {p.name[0]}
+                      </span>
+                    ))}
+                    <span className="stack-count">{current.people.length}</span>
+                  </div>
+                  <span className="team-hint">
+                    {current.people.length
+                      ? "У каждого часа есть цена"
+                      : "Пока никто не занят встречами"}
+                  </span>
+                  <button
+                    className="btn dark add-person"
+                    disabled={current.people.length >= 12}
+                    onClick={() => setEditing("new")}
+                  >
+                    <Plus size={18} />
+                    {current.people.length >= 12
+                      ? "Все 12 мест заняты"
+                      : "Добавить участника"}
+                  </button>
+                </div>
+                <div className="settings">
+                  <Slider
+                    label="Длительность встречи"
+                    value={current.minutes}
+                    min={5}
+                    max={240}
+                    unit="мин"
+                    hint="без «ещё один вопрос»"
+                    onChange={(minutes) => update({ minutes })}
+                  />
+                  <Slider
+                    label="Таких встреч в месяц"
+                    value={current.meetings}
+                    min={0}
+                    max={100}
+                    unit="раз"
+                    hint="каждый созвон считается"
+                    onChange={(meetings) => update({ meetings })}
+                  />
+                </div>
+                {hours}
+              </div>
+              <aside className="cost-panel">
+                <div className="panel-top">
+                  <span className="eyebrow">СТОИМОСТЬ ВРЕМЕНИ</span>
+                  <span className="status-light">LIVE</span>
+                </div>
+                <p className="total-label">В месяц вы созваниваетесь на</p>
+                <div className="main-total" data-testid="monthly-cost">
+                  <Counter value={c.monthly.toNumber()} />
+                  <span className="currency">₽</span>
+                </div>
+                <div className="cost-rule" />
+                <div className="cost-line">
+                  <span>Одна встреча</span>
+                  <strong data-testid="meeting-cost">
+                    <Counter value={c.meeting.toNumber()} suffix=" ₽" />
+                  </strong>
+                </div>
+                <div className="cost-line">
+                  <span>За целый год</span>
+                  <strong data-testid="yearly-cost">
+                    <Counter value={c.yearly.toNumber()} suffix=" ₽" />
+                  </strong>
+                </div>
+                <div className="time-metric">
+                  <span className="time-icon">
+                    <Users size={22} />
+                  </span>
+                  <div>
+                    <strong>
+                      <Counter value={c.personHours.toNumber()} digits={1} />
+                      <small> чел.-ч / месяц</small>
+                    </strong>
+                    <p>Рабочее время всей команды</p>
+                  </div>
+                </div>
+                <p className="honest-note">
+                  <Info size={15} />
+                  <span>
+                    Это стоимость рабочего времени, а не потерянные деньги.
+                    Хорошая встреча может стоить каждого рубля.
+                  </span>
+                </p>
+                <button className="btn lime optimize-btn" onClick={optimize}>
+                  <span>
+                    А что, если
+                    <br />
+                    оптимизировать?
+                  </span>
+                  <ArrowUpRight size={27} />
+                </button>
+                <button
+                  className="panel-receipt text-btn"
+                  onClick={() => setReceipt(true)}
+                >
+                  <ReceiptText size={17} />
+                  Получить счёт за совещания
+                </button>
+                <div className="panel-serrations" />
+              </aside>
+            </section>
+          ) : (
+            <section className="comparison" aria-label="Сравнение сценариев">
+              <div className="compare-heading">
+                <div>
+                  <div className="eyebrow">МЕНЬШЕ СОЗВОНОВ. БОЛЬШЕ ДЕЛА.</div>
+                  <h2>
+                    Тот же стол.
+                    <br />
+                    Другие правила<span className="coral-text">.</span>
+                  </h2>
+                  <p>
+                    Справа меняйте состав и настройки. Слева всё остаётся как
+                    было.
+                  </p>
+                </div>
+                <button
+                  className="text-btn"
+                  onClick={() => {
+                    update(clone(before));
+                    setToast("Сценарий ПОСЛЕ сброшен к исходному");
+                  }}
+                >
+                  <RotateCcw size={16} />
+                  Сбросить изменения
+                </button>
+              </div>
+              <div className="compare-rooms">
+                <article className="scenario-card">
+                  <div className="scenario-title">
+                    <span className="pill muted-pill">ДО</span>
+                    <span>
+                      Исходный сценарий <ShieldCheck size={15} />
+                    </span>
+                  </div>
+                  <Room compact readonly scenario={before} tag="ТАК БЫЛО" />
+                  <div className="scenario-stats">
+                    <strong data-testid="before-cost">
+                      {rub(calculate(before).monthly)}
+                      <small>/ месяц</small>
+                    </strong>
+                    <span>
+                      {calculate(before).count} чел. · {before.minutes} мин ·{" "}
+                      {before.meetings} встреч
+                    </span>
+                  </div>
+                  <div className="frozen-note">
+                    <CheckCheck size={17} />
+                    Этот сценарий зафиксирован
+                  </div>
+                </article>
+                <article className="scenario-card after-card">
+                  <div className="scenario-title">
+                    <span className="pill lime-pill">ПОСЛЕ</span>
+                    <span>
+                      Ваша версия <Sparkles size={15} />
+                    </span>
+                  </div>
+                  <Room
+                    compact
+                    toggleMode
+                    scenario={current}
+                    onPerson={toggle}
+                    tag="А ЧТО, ЕСЛИ…"
+                  />
+                  <div className="scenario-stats">
+                    <strong data-testid="after-cost">
+                      <Counter value={c.monthly.toNumber()} suffix=" ₽" />
+                      <small>/ месяц</small>
+                    </strong>
+                    <span>
+                      {c.count} чел. · {current.minutes} мин ·{" "}
+                      {current.meetings} встреч
+                    </span>
+                  </div>
+                  <div
+                    className="participant-toggles"
+                    aria-label="Участники после оптимизации"
+                  >
+                    {current.people.map((p) => (
+                      <button
+                        key={p.id}
+                        aria-pressed={!current.excluded.includes(p.id)}
+                        onClick={() => toggle(p)}
+                      >
+                        <span
+                          aria-hidden="true"
+                          style={{ background: colors[p.color] }}
+                        >
+                          {p.name[0]}
+                        </span>
+                        {p.name.split(/[\s·]+/)[0]}
+                        {current.excluded.includes(p.id) ? (
+                          <Plus size={13} />
+                        ) : (
+                          <Check size={13} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    className="text-btn edit-team"
+                    onClick={() => setTeamOpen(true)}
+                  >
+                    <Settings2 size={15} />
+                    Изменить команду и зарплаты
+                  </button>
+                  <div className="after-settings">
+                    <Slider
+                      label="Длительность"
+                      value={current.minutes}
+                      min={5}
+                      max={240}
+                      unit="мин"
+                      hint=""
+                      onChange={(minutes) => update({ minutes })}
+                    />
+                    <Slider
+                      label="Встреч в месяц"
+                      value={current.meetings}
+                      min={0}
+                      max={100}
+                      unit="раз"
+                      hint=""
+                      onChange={(meetings) => update({ meetings })}
+                    />
+                    {hours}
+                  </div>
+                </article>
+              </div>
+              {delta && (
+                <div
+                  className={`difference-panel ${delta.monthly.lt(0) ? "increased" : ""}`}
+                >
+                  <div className="difference-heading">
+                    <span className="difference-symbol">
+                      {delta.monthly.gt(0) ? (
+                        <ArrowDownRight size={35} />
+                      ) : delta.monthly.lt(0) ? (
+                        <ArrowUpRight size={35} />
+                      ) : (
+                        <Equal size={35} />
+                      )}
+                    </span>
+                    <div>
+                      <div className="eyebrow">
+                        {delta.monthly.gt(0)
+                          ? "ВЫСВОБОЖДАЕТСЯ ВРЕМЯ НА"
+                          : delta.monthly.lt(0)
+                            ? "СТОИМОСТЬ ВЫРОСЛА НА"
+                            : "ПОКА БЕЗ ИЗМЕНЕНИЙ"}
+                      </div>
+                      <strong data-testid="difference-cost">
+                        <Counter
+                          value={delta.monthly.abs().toNumber()}
+                          suffix=" ₽"
+                        />
+                        <small>/ месяц</small>
+                      </strong>
+                    </div>
+                    <div className="percent-badge">
+                      {delta.percent === null
+                        ? "—"
+                        : `${delta.monthly.gt(0) ? "−" : delta.monthly.lt(0) ? "+" : ""}${number(delta.percent.abs(), 1)}%`}
+                    </div>
+                  </div>
+                  <div className="difference-bottom">
+                    <span>
+                      <b>{rub(delta.yearly.abs())}</b>{" "}
+                      {delta.yearly.gte(0)
+                        ? "эквивалент за год"
+                        : "дополнительно за год"}
+                    </span>
+                    <span>
+                      <b>{number(delta.personHours.abs(), 1)} чел.-ч</b>{" "}
+                      {delta.personHours.gte(0)
+                        ? "высвобождено в месяц"
+                        : "добавлено в месяц"}
+                    </span>
+                    <button
+                      className="btn dark"
+                      onClick={() => setReceipt(true)}
+                    >
+                      Забрать счёт
+                      <ReceiptText size={18} />
+                    </button>
+                  </div>
+                  <p className="difference-disclaimer">
+                    Денежный эквивалент рабочего времени. Фактическая экономия
+                    бюджета зависит от того, как вы используете это время.
+                  </p>
+                </div>
+              )}
+              <button
+                className="text-btn back-calc"
+                onClick={() =>
+                  setState((s) => ({ ...s, mode: "calculate", before: null }))
+                }
+              >
+                <ArrowLeft size={17} />
+                Вернуться к расчёту с текущими настройками
+              </button>
+            </section>
+          )}
+          <section className="bottom-note">
+            <div>
+              <span className="note-number">!</span>
+              <p>
+                <strong>Дело не в том, чтобы отменить все встречи.</strong>
+                <br />А в том, чтобы каждая была на своём месте.
+              </p>
+            </div>
+            <button className="text-btn" onClick={() => setHelp(true)}>
+              Как мы считаем
+              <ArrowRight size={16} />
+            </button>
+          </section>
+        </main>
+        <footer>
+          <span>
+            В КАЖДОЙ БОЧКЕ{" "}
+            <span className="footer-muted">/ цифровые штуки со смыслом</span>
+          </span>
+          <span className="privacy">
+            <ShieldCheck size={14} />
+            {storageError
+              ? "Автосохранение недоступно в браузере"
+              : "Данные только в вашем браузере"}
+          </span>
+          <a
+            href="https://github.com/siblife54-dot/howmuchsozvon"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Код проекта
+            <ArrowUpRight size={13} />
+          </a>
+        </footer>
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              className="toast"
+              role="status"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+            >
+              <Check size={18} />
+              {toast}
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {teamOpen && (
+          <Modal title="Кто на созвоне?" onClose={() => setTeamOpen(false)}>
+            <p className="modal-subtitle">
+              {comparing
+                ? "Редактируется только сценарий ПОСЛЕ."
+                : "Соберите свою команду. До 12 участников."}
+            </p>
+            <div className="team-list">
+              {current.people.length === 0 && (
+                <p>Здесь пока пусто. Начните с одного человека.</p>
+              )}
+              {current.people.map((p) => (
+                <div className="team-row" key={p.id}>
+                  <span
+                    className="list-avatar"
+                    style={{ background: colors[p.color] }}
+                  >
+                    {p.name[0]}
+                  </span>
+                  <button
+                    className="person-edit"
+                    onClick={() => {
+                      setTeamOpen(false);
+                      setEditing(p);
+                    }}
+                  >
+                    <strong>{p.name}</strong>
+                    <span>
+                      {rub(p.salary)} / мес · {rub(p.salary / current.hours)} /
+                      ч
+                    </span>
+                  </button>
+                  <button
+                    className="icon-btn"
+                    aria-pressed={!current.excluded.includes(p.id)}
+                    aria-label={`${current.excluded.includes(p.id) ? "Вернуть" : "Исключить"} ${p.name} из встречи`}
+                    onClick={() => toggle(p)}
+                  >
+                    {current.excluded.includes(p.id) ? (
+                      <Plus size={16} />
+                    ) : (
+                      <Check size={16} />
+                    )}
+                  </button>
+                  <button
+                    className="icon-btn danger"
+                    aria-label={`Удалить ${p.name}`}
+                    onClick={() =>
+                      update({
+                        people: current.people.filter((x) => x.id !== p.id),
+                        excluded: current.excluded.filter((id) => id !== p.id),
+                      })
+                    }
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              className="btn dark full-width"
+              disabled={current.people.length >= 12}
+              onClick={() => {
+                setTeamOpen(false);
+                setEditing("new");
+              }}
+            >
+              <Plus size={17} />
+              {current.people.length >= 12
+                ? "Все 12 мест заняты"
+                : "Добавить участника"}
+            </button>
+          </Modal>
+        )}
+        {editing && (
+          <PersonForm
+            person={editing === "new" ? null : editing}
+            onClose={() => setEditing(null)}
+            onSave={savePerson}
+            onDelete={
+              editing === "new"
+                ? undefined
+                : () => {
+                    update({
+                      people: current.people.filter((p) => p.id !== editing.id),
+                      excluded: current.excluded.filter(
+                        (id) => id !== editing.id,
+                      ),
+                    });
+                    setEditing(null);
+                  }
+            }
+          />
+        )}
+        {receipt && (
+          <ReceiptModal
+            scenario={current}
+            before={comparing ? before : null}
+            onClose={() => setReceipt(false)}
+            notify={setToast}
+          />
+        )}
+        {resetOpen && (
+          <Modal
+            title="Новый созвон, чистый лист?"
+            onClose={() => setResetOpen(false)}
+          >
+            <p className="modal-subtitle">
+              Текущие настройки и сравнение будут заменены демонстрационной
+              командой.
+            </p>
+            <button
+              className="btn lime full-width"
+              onClick={() => {
+                setState({
+                  version: 1,
+                  current: demo(),
+                  before: null,
+                  mode: "calculate",
+                  example: true,
+                });
+                setResetOpen(false);
+                setToast("Демонстрационная команда восстановлена");
+              }}
+            >
+              Начать заново
+              <RotateCcw size={18} />
+            </button>
+            <button
+              className="text-btn full-width"
+              onClick={() => setResetOpen(false)}
+            >
+              Оставить мой расчёт
+            </button>
+          </Modal>
+        )}
+        {help && (
+          <Modal title="Прозрачная математика" onClose={() => setHelp(false)}>
+            <div className="help-content">
+              <p>Стоимость часа = месячная зарплата ÷ рабочие часы в месяц.</p>
+              <p>
+                Одна встреча = сумма стоимости часа участников × длительность в
+                минутах ÷ 60.
+              </p>
+              <p>
+                Месяц = стоимость встречи × количество встреч. Год = месяц × 12.
+                Человеко-часы = число участников × часы встречи × число встреч.
+              </p>
+              <div className="formula-example">
+                Например: 2 человека с зарплатой 80 000 ₽, 160 рабочих часов,
+                встреча на 30 минут.
+                <br />
+                <strong>500 ₽ за встречу · 5 000 ₽ за 10 встреч.</strong>
+              </div>
+              <p>
+                160 часов — условная норма, её можно изменить. Это оценка
+                стоимости рабочего времени по зарплате, без страховых взносов,
+                накладных расходов и оценки пользы встречи.
+              </p>
+              <p>
+                Расчёт ведётся десятичной арифметикой; округляются только
+                показанные суммы. Разница отображаемых округлённых сумм может
+                отличаться на рубль от округлённой разницы.
+              </p>
+              <p>
+                <ShieldCheck size={16} /> Имена, зарплаты и настройки хранятся в
+                localStorage этого браузера. На сервер они не отправляются. На
+                общем компьютере очистите данные сайта после использования.
+              </p>
+            </div>
+          </Modal>
+        )}
+      </div>
+    </MotionConfig>
+  );
 }
