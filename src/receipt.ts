@@ -34,7 +34,6 @@ export function receiptText(s: Scenario, before: Scenario | null) {
     "",
     "Сумма зарплат ÷ рабочие часы × длительность в часах.",
     "Это стоимость времени, а не автоматически потерянные деньги.",
-    "В каждой бочке · проект № 01",
     "siblife54-dot.github.io/howmuchsozvon/",
   );
   return lines.join("\n");
@@ -68,7 +67,7 @@ export async function receiptPng(
   ctx.fillText("СТОИМОСТЬ РАБОЧЕГО ВРЕМЕНИ", 550, 205);
   ctx.font = "22px IBM Plex Mono, monospace";
   ctx.fillText(
-    new Intl.DateTimeFormat("ru-RU").format(new Date()) + "   /   ПРОЕКТ № 01",
+    new Intl.DateTimeFormat("ru-RU").format(new Date()),
     550,
     254,
   );
@@ -137,10 +136,8 @@ export async function receiptPng(
     "Имена и персональные зарплаты в чек не включены.",
   ].forEach((t, i) => ctx.fillText(t, 550, foot + 55 + i * 37));
   ctx.fillStyle = "#20221d";
-  ctx.font = "700 24px Manrope Variable, sans-serif";
-  ctx.fillText("В КАЖДОЙ БОЧКЕ · ПРОЕКТ № 01", 550, foot + 205);
   ctx.font = "20px IBM Plex Mono, monospace";
-  ctx.fillText("siblife54-dot.github.io/howmuchsozvon/", 550, foot + 249);
+  ctx.fillText("siblife54-dot.github.io/howmuchsozvon/", 550, foot + 205);
   return new Promise((resolve, reject) =>
     canvas.toBlob(
       (blob) =>

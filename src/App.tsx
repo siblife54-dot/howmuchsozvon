@@ -733,10 +733,6 @@ export default function App() {
               созвон<span className="brand-period">.</span>
             </span>
           </a>
-          <div className="project-mark">
-            <span className="tiny-square" />В КАЖДОЙ БОЧКЕ
-            <span className="project-number">ПРОЕКТ № 01</span>
-          </div>
           <button
             className="header-reset text-btn"
             onClick={() => setResetOpen(true)}
@@ -924,7 +920,7 @@ export default function App() {
                 </p>
                 <button className="btn lime optimize-btn" onClick={optimize}>
                   <span>
-                    А что, если
+                    А что, если{" "}
                     <br />
                     оптимизировать?
                   </span>
@@ -1156,27 +1152,8 @@ export default function App() {
               <ArrowRight size={16} />
             </button>
           </section>
+          {storageError && <p role="status">Автосохранение недоступно в браузере</p>}
         </main>
-        <footer>
-          <span>
-            В КАЖДОЙ БОЧКЕ{" "}
-            <span className="footer-muted">/ цифровые штуки со смыслом</span>
-          </span>
-          <span className="privacy">
-            <ShieldCheck size={14} />
-            {storageError
-              ? "Автосохранение недоступно в браузере"
-              : "Данные только в вашем браузере"}
-          </span>
-          <a
-            href="https://github.com/siblife54-dot/howmuchsozvon"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Код проекта
-            <ArrowUpRight size={13} />
-          </a>
-        </footer>
         <AnimatePresence>
           {toast && (
             <motion.div
